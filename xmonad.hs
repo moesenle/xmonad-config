@@ -25,20 +25,21 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.UrgencyHook
--- import XMonad.Hooks.FadeInactive
- 
  
 -- import XMonad.Layout
-import XMonad.Layout.Accordion
-import XMonad.Layout.Grid
 import XMonad.Layout.Maximize
 import XMonad.Layout.NoBorders
 import XMonad.Layout.PerWorkspace
-import XMonad.Layout.SimpleFloat
-import XMonad.Layout.Spiral
-
+import XMonad.Layout.SimplestFloat
+import XMonad.Layout.Tabbed
+import XMonad.Layout.ResizeScreen
+import XMonad.Layout.ComboP
+import XMonad.Layout.TwoPane
+import XMonad.Layout.Grid
+    
 import XMonad.Util.Loggers
 import XMonad.Util.Timer
+import XMonad.Util.Themes
  
 -- The preferred terminal program, which is used in a binding below and by
 -- certain contrib modules.
@@ -81,16 +82,16 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,		xK_semicolon	), spawn "mpc toggle")
  
     -- launch gmrun
-    , ((modMask,		xK_F1	), spawn "gmrun")
+    -- , ((modMask,		xK_F1	), spawn "gmrun")
  
     -- launch firefox
     , ((modMask,	        xK_F2	), spawn "firefox -new-window")
 
     -- launch emacs
-    , ((modMask,	        xK_F3	), spawn "emacsclient.emacs23 -c -a emacs23")
+    , ((modMask,	        xK_F3	), spawn "emacsclient -c -a emacs")
 
     -- lock screen
-    , ((modMask,	        xK_F12	), spawn "xscreensaver-command -lock")      
+    , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")
  
     -- close focused window
     , ((modMask .|. shiftMask,  xK_c    ), kill)
@@ -197,12 +198,9 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
  
 genericLayout =	maximize $
                 tiled 
-	        ||| Mirror tiled 
-	        ||| Full 
-	        ||| Grid 
-	        ||| Accordion
-	        ||| simpleFloat
-                ||| spiral (6/7)
+	        ||| tabbed shrinkText (theme smallClean)
+	        ||| simplestFloat
+                ||| (noBorders $ withNewRectangle (Rectangle 0 0 1024 768) Full)
                 
   where
      -- default tiling algorithm partitions the screen into two panes
@@ -217,17 +215,15 @@ genericLayout =	maximize $
      -- Percent of screen to increment by when resizing panes
      delta   = 3/100
  
- 
-myLayout = onWorkspace "1" simpleFloat $ genericLayout
- 
+myLayout = onWorkspace "1" (combineTwoP (TwoPane 0.01 0.15) Grid Grid (Or (And (ClassName "Skype.real") (Not (Role "Chats"))) (Title "Kopete"))) $  genericLayout
+
 ------------------------------------------------------------------------
 -- Window rules:
 --
 myManageHook = composeAll
     [ className =? "gmrun"		--> doFloat
     , resource =? "desktop_window"	--> doIgnore
-    , className =? "skype"              --> doFloat
-    , className =? "kopete"             --> doFloat
+    , className =? "Do"                 --> doFloat
     ]
  
  
@@ -269,8 +265,8 @@ main = do
  
        -- hooks, layouts
        manageHook         = myManageHook <+> manageDocks,
-       logHook	    = myLogHook workspaceBarPipe, -- >> fadeInactiveLogHook 0xdddddddd
+       logHook	    = myLogHook workspaceBarPipe,
  
        -- For use with no panels or just dzen2
-       layoutHook         = ewmhDesktopsLayout $ avoidStruts $ myLayout
+       layoutHook         = avoidStruts $ myLayout
     }
