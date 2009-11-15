@@ -33,9 +33,9 @@ import XMonad.Layout.PerWorkspace
 import XMonad.Layout.SimplestFloat
 import XMonad.Layout.Tabbed
 import XMonad.Layout.ResizeScreen
-import XMonad.Layout.IM
+import XMonad.Layout.ComboP
+import XMonad.Layout.TwoPane
 import XMonad.Layout.Grid
-import XMonad.Layout.Reflect
     
 import XMonad.Util.Loggers
 import XMonad.Util.Timer
@@ -88,7 +88,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,	        xK_F2	), spawn "firefox -new-window")
 
     -- launch emacs
-    , ((modMask,	        xK_F3	), spawn "emacsclient -c")
+    , ((modMask,	        xK_F3	), spawn "emacsclient -c -a emacs")
 
     -- lock screen
     , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")
@@ -215,8 +215,9 @@ genericLayout =	maximize $
      -- Percent of screen to increment by when resizing panes
      delta   = 3/100
  
-myLayout = onWorkspace "1" (withIM (1%6) (Title "Kopete") $ reflectHoriz $ withIM (1 % 6) (And (ClassName "Skype") (Not (Role "Chats"))) Grid) $ genericLayout
- 
+--myLayout = onWorkspace "1" (withIM (1%6) (Title "Kopete") $ reflectHoriz $ withIM (1 % 6) (And (ClassName "Skype") (Not (Role "Chats"))) Grid) $ genericLayout
+myLayout = onWorkspace "1" (combineTwoP (TwoPane 0.01 0.15) Grid Grid (Or (And (ClassName "Skype") (Not (Role "Chats"))) (Title "Kopete"))) $  genericLayout
+
 ------------------------------------------------------------------------
 -- Window rules:
 --
@@ -268,5 +269,5 @@ main = do
        logHook	    = myLogHook workspaceBarPipe,
  
        -- For use with no panels or just dzen2
-       layoutHook         = ewmhDesktopsLayout $ avoidStruts $ myLayout
+       layoutHook         = avoidStruts $ myLayout
     }
