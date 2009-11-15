@@ -36,6 +36,7 @@ import XMonad.Layout.ResizeScreen
 import XMonad.Layout.ComboP
 import XMonad.Layout.TwoPane
 import XMonad.Layout.Grid
+import XMonad.Layout.Named
     
 import XMonad.Util.Loggers
 import XMonad.Util.Timer
@@ -119,6 +120,9 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
  
     -- Swap the focused window and the master window
     , ((modMask .|. shiftMask,  xK_Return), windows W.swapMaster)
+
+    -- Swap window
+    , ((modMask, xK_o), sendMessage $ SwapWindow)
  
     -- Swap the focused window with the next window
     , ((modMask .|. shiftMask,  xK_j     ), windows W.swapDown  )
@@ -196,11 +200,11 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- Layouts:
 -- 
  
-genericLayout =	maximize $
-                tiled 
-	        ||| tabbed shrinkText (theme smallClean)
-	        ||| simplestFloat
-                ||| (noBorders $ withNewRectangle (Rectangle 0 0 1024 768) Full)
+genericLayout =	nameTail $ maximize $
+                named "T" tiled 
+	        ||| named "M" (tabbed shrinkText (theme smallClean))
+	        ||| named "F" simplestFloat
+                ||| named "Presentation" (noBorders $ withNewRectangle (Rectangle 0 0 1024 768) Full)
                 
   where
      -- default tiling algorithm partitions the screen into two panes
@@ -216,7 +220,7 @@ genericLayout =	maximize $
      delta   = 3/100
  
 --myLayout = onWorkspace "1" (withIM (1%6) (Title "Kopete") $ reflectHoriz $ withIM (1 % 6) (And (ClassName "Skype") (Not (Role "Chats"))) Grid) $ genericLayout
-myLayout = onWorkspace "1" (combineTwoP (TwoPane 0.01 0.15) Grid Grid (Or (And (ClassName "Skype") (Not (Role "Chats"))) (Title "Kopete"))) $  genericLayout
+myLayout = onWorkspace "1" (named "IM" $ combineTwoP (TwoPane 0.01 0.15) Grid Grid (Or (And (ClassName "Skype") (Not (Role "Chats"))) (Title "Kopete"))) $  genericLayout
 
 ------------------------------------------------------------------------
 -- Window rules:
