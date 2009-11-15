@@ -25,21 +25,21 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.UrgencyHook
--- import XMonad.Hooks.FadeInactive
- 
  
 -- import XMonad.Layout
-import XMonad.Layout.Accordion
-import XMonad.Layout.Grid
 import XMonad.Layout.Maximize
 import XMonad.Layout.NoBorders
 import XMonad.Layout.PerWorkspace
-import XMonad.Layout.SimpleFloat
-import XMonad.Layout.Spiral
+import XMonad.Layout.SimplestFloat
+import XMonad.Layout.Tabbed
 import XMonad.Layout.ResizeScreen
-
+import XMonad.Layout.IM
+import XMonad.Layout.Grid
+import XMonad.Layout.Reflect
+    
 import XMonad.Util.Loggers
 import XMonad.Util.Timer
+import XMonad.Util.Themes
  
 -- The preferred terminal program, which is used in a binding below and by
 -- certain contrib modules.
@@ -198,10 +198,8 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
  
 genericLayout =	maximize $
                 tiled 
-	        ||| Mirror tiled 
-	        ||| Full 
-	        ||| Grid 
-	        ||| simpleFloat
+	        ||| tabbed shrinkText (theme smallClean)
+	        ||| simplestFloat
                 ||| (noBorders $ withNewRectangle (Rectangle 0 0 1024 768) Full)
                 
   where
@@ -217,8 +215,7 @@ genericLayout =	maximize $
      -- Percent of screen to increment by when resizing panes
      delta   = 3/100
  
- 
-myLayout = onWorkspace "1" simpleFloat $ genericLayout
+myLayout = onWorkspace "1" (withIM (1%6) (Title "Kopete") $ reflectHoriz $ withIM (1 % 6) (And (ClassName "Skype") (Not (Role "Chats"))) Grid) $ genericLayout
  
 ------------------------------------------------------------------------
 -- Window rules:
@@ -226,8 +223,6 @@ myLayout = onWorkspace "1" simpleFloat $ genericLayout
 myManageHook = composeAll
     [ className =? "gmrun"		--> doFloat
     , resource =? "desktop_window"	--> doIgnore
-    , className =? "skype"              --> doFloat
-    , className =? "kopete"             --> doFloat
     , className =? "Do"                 --> doFloat
     ]
  
@@ -270,7 +265,7 @@ main = do
  
        -- hooks, layouts
        manageHook         = myManageHook <+> manageDocks,
-       logHook	    = myLogHook workspaceBarPipe, -- >> fadeInactiveLogHook 0xdddddddd
+       logHook	    = myLogHook workspaceBarPipe,
  
        -- For use with no panels or just dzen2
        layoutHook         = ewmhDesktopsLayout $ avoidStruts $ myLayout
