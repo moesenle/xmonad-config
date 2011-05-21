@@ -25,6 +25,7 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.UrgencyHook
+import XMonad.Hooks.FadeInactive
  
 -- import XMonad.Layout
 import XMonad.Layout.Maximize
@@ -32,8 +33,8 @@ import XMonad.Layout.NoBorders
 import XMonad.Layout.PerWorkspace
 import XMonad.Layout.SimplestFloat
 import XMonad.Layout.Tabbed
-import XMonad.Layout.ResizeScreen
 import XMonad.Layout.ComboP
+import XMonad.Layout.Column    
 import XMonad.Layout.TwoPane
 import XMonad.Layout.Grid
 import XMonad.Layout.Named
@@ -49,7 +50,7 @@ myTerminal      = "urxvt"
  
 -- Width of the window border in pixels.
 --
-myBorderWidth   = 2
+myBorderWidth   = 1
  
 -- modMask lets you specify which modkey you want to use. The default
 -- is mod1Mask ("left alt").  You may also consider using mod3Mask
@@ -67,7 +68,7 @@ myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
 -- Border colors for unfocused and focused windows, respectively.
 --
 myNormalBorderColor  = "#000088"
-myFocusedBorderColor = "#dddddd"
+myFocusedBorderColor = "#00dddd"
  
 ------------------------------------------------------------------------
 -- Key bindings
@@ -83,7 +84,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,		xK_semicolon	), spawn "mpc toggle")
  
     -- launch gmrun
-    -- , ((modMask,		xK_F1	), spawn "gmrun")
+    , ((modMask,		xK_F1	), spawn "gmrun")
  
     -- launch firefox
     , ((modMask,	        xK_F2	), spawn "firefox -new-window")
@@ -121,9 +122,6 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- Swap the focused window and the master window
     , ((modMask .|. shiftMask,  xK_Return), windows W.swapMaster)
 
-    -- Swap window
-    , ((modMask, xK_o), sendMessage $ SwapWindow)
- 
     -- Swap the focused window with the next window
     , ((modMask .|. shiftMask,  xK_j     ), windows W.swapDown  )
  
@@ -135,6 +133,9 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
  
     -- Expand the master area
     , ((modMask,                xK_l     ), sendMessage Expand)
+
+    -- Send client to other in combo layouts
+    , ((modMask,                xK_o     ), sendMessage SwapWindow)
  
     -- Push window back into tiling
     , ((modMask,                xK_t     ), withFocused $ windows . W.sink)
@@ -200,26 +201,21 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- Layouts:
 -- 
  
-genericLayout =	nameTail $ maximize $
+genericLayout =	nameTail $ maximize $ smartBorders $
                 named "T" tiled 
 	        ||| named "M" (tabbed shrinkText (theme smallClean))
 	        ||| named "F" simplestFloat
-                ||| named "Presentation" (noBorders $ withNewRectangle (Rectangle 0 0 1024 768) Full)
-                
+                ||| named "Floating Area" floatingArea
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
- 
-     -- The default number of windows in the master pane
      nmaster = 1
- 
-     -- Default proportion of screen occupied by master pane
      ratio   = 1/2
- 
-     -- Percent of screen to increment by when resizing panes
      delta   = 3/100
+     floatingArea = combineTwoP (TwoPane 0.01 0.75) simplestFloat (Column 1.0) $ Const True
  
-myLayout = onWorkspace "1" (combineTwoP (TwoPane 0.01 0.15) Grid Grid (Or (And (ClassName "Skype.real") (Not (Role "Chats"))) (Title "Kopete"))) $  genericLayout
+myLayout = onWorkspace "1" (named "IM" $ combineTwoP (TwoPane 0.01 0.15) Grid Grid (Or (And (ClassName "Skype.real") (Not (Role "Chats"))) (Title "Kopete"))) $  genericLayout
+-- myLayout = onWorkspace "1" (named "IM" $ combineTwoP (TwoPane 0.01 0.15) Grid Grid ((ClassName "Skype.real" `And` (Not $ Role "Chats")) `Or` (ClassName "Pidgin" `And` Role "buddy_list"))) $  genericLayout
 
 ------------------------------------------------------------------------
 -- Window rules:
@@ -228,6 +224,7 @@ myManageHook = composeAll
     [ className =? "gmrun"		--> doFloat
     , resource =? "desktop_window"	--> doIgnore
     , className =? "Do"                 --> doFloat
+--    , className =? "MPlayer"            --> doFloat
     ]
  
  
@@ -249,7 +246,7 @@ myLogHook h =
  
 main :: IO ()
 main = do
-  workspaceBarPipe <- spawnPipe "/home/moesenle/local/bin/xmobar /home/moesenle/.xmonad/xmobarrc"
+  workspaceBarPipe <- spawnPipe "xmobar /home/moesenle/.xmonad/xmobarrc"
                            
   --  conkyBarPipe <- spawnPipe myConkyBar
   xmonad $ withUrgencyHook NoUrgencyHook defaultConfig {
@@ -269,7 +266,7 @@ main = do
  
        -- hooks, layouts
        manageHook         = myManageHook <+> manageDocks,
-       logHook	    = myLogHook workspaceBarPipe,
+       logHook	    = fadeInactiveLogHook 0.85 >> myLogHook workspaceBarPipe,
  
        -- For use with no panels or just dzen2
        layoutHook         = avoidStruts $ myLayout
