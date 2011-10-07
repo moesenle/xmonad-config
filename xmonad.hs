@@ -90,7 +90,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,	        xK_F2	), spawn "firefox -new-window")
 
     -- launch emacs
-    , ((modMask,	        xK_F3	), spawn "emacsclient -c -a emacs")
+    , ((modMask,	        xK_F3	), spawn "emacsclient -c")
 
     -- lock screen
     , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")
