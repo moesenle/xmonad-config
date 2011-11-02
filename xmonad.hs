@@ -86,11 +86,13 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- launch gmrun
     , ((modMask,		xK_F1	), spawn "gmrun")
  
-    -- launch firefox
-    , ((modMask,	        xK_F2	), spawn "firefox -new-window")
+    -- launch browser
+    , ((modMask,	        xK_F2	), spawn "google-chrome")
 
     -- launch emacs
-    , ((modMask,	        xK_F3	), spawn "emacsclient -c")
+    , ((modMask,	        xK_F3	), spawn "/home/moesenle/local/bin/ec")
+    -- launch eclipse
+    , ((modMask,	        xK_F4	), spawn "/home/moesenle/local/bin/eclipse")
 
     -- lock screen
     , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")
@@ -202,7 +204,8 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- 
  
 genericLayout =	nameTail $ maximize $ smartBorders $
-                named "T" tiled 
+                named "T" tiled
+                ||| named "G" Grid
 	        ||| named "M" (tabbed shrinkText (theme smallClean))
 	        ||| named "F" simplestFloat
                 ||| named "Floating Area" floatingArea
