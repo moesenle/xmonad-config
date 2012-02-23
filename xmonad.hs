@@ -71,7 +71,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
  
     , ((modMask,	        xK_F2	), spawn "google-chrome")
 
-    , ((modMask,	        xK_F3	), spawn "~/moesenle/local/bin/ec")
+    , ((modMask,	        xK_F3	), spawn "~/local/bin/ec")
 
     , ((modMask,	        xK_F4	), spawn "eclipse")
       
