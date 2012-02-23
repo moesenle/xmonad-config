@@ -12,6 +12,7 @@ import qualified Data.Map        as M
 -- GHC hierarchical libraries
 import XMonad.Operations
 import XMonad.Config
+import XMonad.Config.Gnome
 import XMonad.Util.Run
 import System.IO
 import Data.Ratio ((%))
@@ -25,9 +26,7 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.UrgencyHook
-import XMonad.Hooks.FadeInactive
  
--- import XMonad.Layout
 import XMonad.Layout.Maximize
 import XMonad.Layout.NoBorders
 import XMonad.Layout.PerWorkspace
@@ -40,17 +39,7 @@ import XMonad.Layout.Grid
 import XMonad.Layout.Named
     
 import XMonad.Util.Loggers
-import XMonad.Util.Timer
 import XMonad.Util.Themes
- 
--- The preferred terminal program, which is used in a binding below and by
--- certain contrib modules.
---
-myTerminal      = "urxvt"
- 
--- Width of the window border in pixels.
---
-myBorderWidth   = 1
  
 -- modMask lets you specify which modkey you want to use. The default
 -- is mod1Mask ("left alt").  You may also consider using mod3Mask
@@ -75,27 +64,18 @@ myFocusedBorderColor = "#00dddd"
 --
 myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
  
-    -- launch a terminal
     [ ((modMask,                xK_Return), spawn $ XMonad.terminal conf)
  
-    -- MPC stuff
-    , ((modMask,		xK_n	), spawn "mpc next")
-    , ((modMask,		xK_p	), spawn "mpc prev")
-    , ((modMask,		xK_semicolon	), spawn "mpc toggle")
- 
-    -- launch gmrun
     , ((modMask,		xK_F1	), spawn "gmrun")
  
-    -- launch browser
     , ((modMask,	        xK_F2	), spawn "google-chrome")
 
-    -- launch emacs
-    , ((modMask,	        xK_F3	), spawn "/home/moesenle/local/bin/ec")
-    -- launch eclipse
-    , ((modMask,	        xK_F4	), spawn "/home/moesenle/local/bin/eclipse")
+    , ((modMask,	        xK_F3	), spawn "~/moesenle/local/bin/ec")
 
+    , ((modMask,	        xK_F4	), spawn "eclipse")
+      
     -- lock screen
-    , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")
+    , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")      
  
     -- close focused window
     , ((modMask .|. shiftMask,  xK_c    ), kill)
@@ -124,6 +104,9 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- Swap the focused window and the master window
     , ((modMask .|. shiftMask,  xK_Return), windows W.swapMaster)
 
+    -- Swap window
+    , ((modMask,                     xK_o), sendMessage $ SwapWindow)
+ 
     -- Swap the focused window with the next window
     , ((modMask .|. shiftMask,  xK_j     ), windows W.swapDown  )
  
@@ -135,9 +118,6 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
  
     -- Expand the master area
     , ((modMask,                xK_l     ), sendMessage Expand)
-
-    -- Send client to other in combo layouts
-    , ((modMask,                xK_o     ), sendMessage SwapWindow)
  
     -- Push window back into tiling
     , ((modMask,                xK_t     ), withFocused $ windows . W.sink)
@@ -181,7 +161,6 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     ,	((modMask .|. shiftMask	, xK_n	), shiftToNext >> nextWS)
     ]
  
- 
 ------------------------------------------------------------------------
 -- Mouse bindings: default actions bound to mouse events
 --
@@ -204,39 +183,37 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- 
  
 genericLayout =	nameTail $ maximize $ smartBorders $
-                named "T" tiled
-                ||| named "G" Grid
+                named "T" tiled 
 	        ||| named "M" (tabbed shrinkText (theme smallClean))
 	        ||| named "F" simplestFloat
-                ||| named "Floating Area" floatingArea
+                
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
-     nmaster = 1
-     ratio   = 1/2
-     delta   = 3/100
-     floatingArea = combineTwoP (TwoPane 0.01 0.75) simplestFloat (Column 1.0) $ Const True
  
-myLayout = onWorkspace "1" (named "IM" $ combineTwoP (TwoPane 0.01 0.15) Grid Grid (Or (And (ClassName "Skype.real") (Not (Role "Chats"))) (Title "Kopete"))) $  genericLayout
--- myLayout = onWorkspace "1" (named "IM" $ combineTwoP (TwoPane 0.01 0.15) Grid Grid ((ClassName "Skype.real" `And` (Not $ Role "Chats")) `Or` (ClassName "Pidgin" `And` Role "buddy_list"))) $  genericLayout
-
-------------------------------------------------------------------------
--- Window rules:
---
+     -- The default number of windows in the master pane
+     nmaster = 1
+ 
+     -- Default proportion of screen occupied by master pane
+     ratio   = 1/2
+ 
+     -- Percent of screen to increment by when resizing panes
+     delta   = 3/100
+ 
+myLayout = onWorkspace "1" (named "IM" $ combineTwoP
+                            (TwoPane 0.01 0.15) Grid Grid (Const False)) $
+           genericLayout
+  
 myManageHook = composeAll
-    [ className =? "gmrun"		--> doFloat
-    , resource =? "desktop_window"	--> doIgnore
-    , className =? "Do"                 --> doFloat
---    , className =? "MPlayer"            --> doFloat
+    [ className =? "gmrun" --> doFloat,
+      resource =? "desktop_window" --> doIgnore,
+      isKDETrayWindow --> doIgnore,
+      className =? "gimp" --> doFloat,
+      className =? "Unity-2d-panel" --> doIgnore,
+      className =? "Unity-2d-launcher" --> doIgnore
     ]
  
  
--- Whether focus follows the mouse pointer.
---
-myFocusFollowsMouse :: Bool
-myFocusFollowsMouse = False
- 
--- Dzen stuff
 myLogHook :: Handle -> X ()
 myLogHook h =
   dynamicLogWithPP $ xmobarPP
@@ -247,30 +224,33 @@ myLogHook h =
  
 ------------------------------------------------------------------------
  
+startup :: X ()
+startup = spawn "gnome-settings-daemon"
+
 main :: IO ()
 main = do
   workspaceBarPipe <- spawnPipe "xmobar /home/moesenle/.xmonad/xmobarrc"
                            
   --  conkyBarPipe <- spawnPipe myConkyBar
-  xmonad $ withUrgencyHook NoUrgencyHook defaultConfig {
+  xmonad $ withUrgencyHook NoUrgencyHook gnomeConfig {
        -- simple stuff
-       terminal           = myTerminal,
-       focusFollowsMouse  = myFocusFollowsMouse,
-       borderWidth        = myBorderWidth,
-       modMask            = myModMask,
-       numlockMask        = myNumlockMask,
-       workspaces         = myWorkspaces,
-       normalBorderColor  = myNormalBorderColor,
-       focusedBorderColor = myFocusedBorderColor,
+    terminal = "urxvt",
+    focusFollowsMouse = False,
+    borderWidth = 2,
+    modMask = myModMask,
+    numlockMask = myNumlockMask,
+    workspaces = myWorkspaces,
+    normalBorderColor = myNormalBorderColor,
+    focusedBorderColor = myFocusedBorderColor,
  
-       -- key bindings
-       keys               = myKeys,
-       mouseBindings      = myMouseBindings,
+    -- key bindings
+    keys = myKeys,
+    mouseBindings = myMouseBindings,
  
-       -- hooks, layouts
-       manageHook         = myManageHook <+> manageDocks,
-       logHook	    = fadeInactiveLogHook 0.85 >> myLogHook workspaceBarPipe,
- 
-       -- For use with no panels or just dzen2
-       layoutHook         = avoidStruts $ myLayout
+    -- hooks, layouts
+    manageHook = manageHook gnomeConfig <+> myManageHook <+> manageDocks,
+    logHook = logHook gnomeConfig >> myLogHook workspaceBarPipe,
+    handleEventHook = handleEventHook gnomeConfig >> ewmhDesktopsEventHook,
+    layoutHook = avoidStruts $ myLayout,
+    startupHook = startup
     }

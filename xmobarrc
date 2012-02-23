@@ -5,7 +5,7 @@ Config { font = "-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*"
        , lowerOnStart = True
        , commands = [ Run Date "%a %b %_d %H:%M:%S" "date" 10
                     , Run StdinReader
-                    , Run Com "cat" ["/home/moesenle/.xmonad/imapwatcher-pipe"] "imapwatcher" 10
+                    , Run Com "cat" ["~/.xmonad/imapwatcher-pipe"] "imapwatcher" 10
                     ]
        , sepChar = "%"
        , alignSep = "}{"
