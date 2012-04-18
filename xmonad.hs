@@ -205,11 +205,12 @@ myLayout = onWorkspace "1" (named "IM" $ combineTwoP
   
 myManageHook = composeAll
     [ className =? "gmrun" --> doFloat,
-      resource =? "desktop_window" --> doIgnore,
+      appName =? "desktop_window" --> doIgnore,
       isKDETrayWindow --> doIgnore,
       className =? "gimp" --> doFloat,
       className =? "Unity-2d-panel" --> doIgnore,
-      className =? "Unity-2d-launcher" --> doIgnore
+      className =? "Unity-2d-launcher" --> doIgnore,
+      appName =? "xfce4-notifyd" --> doIgnore
     ]
  
  
