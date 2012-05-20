@@ -248,8 +248,8 @@ main = do
  
     -- hooks, layouts
     manageHook = manageHook gnomeConfig <+> myManageHook <+> manageDocks,
-    logHook = logHook gnomeConfig >> myLogHook workspaceBarPipe,
-    handleEventHook = handleEventHook gnomeConfig >> fullscreenEventHook >> ewmhDesktopsEventHook,
+    logHook = logHook gnomeConfig <+> myLogHook workspaceBarPipe,
+    handleEventHook = fullscreenEventHook <+> ewmhDesktopsEventHook <+> handleEventHook gnomeConfig,
     layoutHook = avoidStruts $ myLayout,
-    startupHook = startup >> ewmhDesktopsStartup
+    startupHook = startup <+> ewmhDesktopsStartup
     }
