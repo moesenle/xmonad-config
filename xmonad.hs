@@ -232,8 +232,8 @@ main = do
   workspaceBarPipe <- spawnPipe "xmobar /home/moesenle/.xmonad/xmobarrc"
                            
   --  conkyBarPipe <- spawnPipe myConkyBar
-  xmonad $ withUrgencyHook NoUrgencyHook gnomeConfig {
-       -- simple stuff
+  xmonad $ ewmh $ withUrgencyHook NoUrgencyHook gnomeConfig {
+    -- simple stuff
     terminal = "urxvt",
     focusFollowsMouse = False,
     borderWidth = 2,
@@ -249,7 +249,7 @@ main = do
     -- hooks, layouts
     manageHook = manageHook gnomeConfig <+> myManageHook <+> manageDocks,
     logHook = logHook gnomeConfig >> myLogHook workspaceBarPipe,
-    handleEventHook = handleEventHook gnomeConfig >> ewmhDesktopsEventHook,
+    handleEventHook = handleEventHook gnomeConfig >> fullscreenEventHook >> ewmhDesktopsEventHook,
     layoutHook = avoidStruts $ myLayout,
-    startupHook = startup
+    startupHook = startup >> ewmhDesktopsStartup
     }
