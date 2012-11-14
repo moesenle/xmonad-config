@@ -49,7 +49,6 @@ import XMonad.Util.Themes
 --
 myModMask	= mod4Mask
 altMask 	= mod1Mask 
-myNumlockMask   = mod2Mask
  
 -- The default number of workspaces (virtual screens) and their names.
 --
@@ -274,7 +273,6 @@ main = do
     focusFollowsMouse = False,
     borderWidth = 2,
     modMask = myModMask,
-    numlockMask = myNumlockMask,
     workspaces = withScreens 2 myWorkspaces,
     normalBorderColor = myNormalBorderColor,
     focusedBorderColor = myFocusedBorderColor,
