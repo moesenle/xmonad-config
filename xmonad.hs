@@ -136,7 +136,8 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 
     , ((modMask .|. controlMask, xK_k), screenWorkspace 1 >>= flip whenJust (windows . W.view))
     , ((modMask .|. controlMask, xK_j), screenWorkspace 0 >>= flip whenJust (windows . W.view))
-
+    , ((modMask .|. shiftMask, xK_o), shiftNextScreen)
+    , ((modMask .|. shiftMask, xK_s), swapNextScreen)
     ]
     ++
  
