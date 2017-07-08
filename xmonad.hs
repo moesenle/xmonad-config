@@ -1,32 +1,33 @@
 
-import XMonad
-import XMonad.Actions.CycleWS
-import XMonad.Config.Gnome
-import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.ManageHelpers
-import XMonad.Hooks.UrgencyHook
-import XMonad.Layout.ComboP
-import XMonad.Layout.Grid
-import XMonad.Layout.Maximize
-import XMonad.Layout.Named
-import XMonad.Layout.NoBorders
-import XMonad.Layout.PerWorkspace
-import XMonad.Layout.SimplestFloat
-import XMonad.Layout.Tabbed
-import XMonad.Layout.TwoPane
-import XMonad.Util.Run
-import XMonad.Util.Themes
-import qualified XMonad.StackSet as W
+import           XMonad
+import           XMonad.Actions.CycleWS
+import           XMonad.Actions.Volume
+import           XMonad.Config.Gnome
+import           XMonad.Hooks.DynamicLog
+import           XMonad.Hooks.EwmhDesktops
+import           XMonad.Hooks.ManageDocks
+import           XMonad.Hooks.ManageHelpers
+import           XMonad.Hooks.UrgencyHook
+import           XMonad.Layout.ComboP
+import           XMonad.Layout.Grid
+import           XMonad.Layout.Maximize
+import           XMonad.Layout.Named
+import           XMonad.Layout.NoBorders
+import           XMonad.Layout.PerWorkspace
+import           XMonad.Layout.SimplestFloat
+import           XMonad.Layout.Tabbed
+import           XMonad.Layout.TwoPane
+import qualified XMonad.StackSet             as W
+import           XMonad.Util.Run
+import           XMonad.Util.Themes
 
-import Control.Monad (when, void)
-import System.Exit
-import System.IO
-import System.Directory (doesFileExist, getHomeDirectory)
-import System.FilePath.Posix ((</>))
-import System.Posix.Process (executeFile)
-import qualified Data.Map as M
+import           Control.Monad               (void, when)
+import qualified Data.Map                    as M
+import           System.Directory            (doesFileExist, getHomeDirectory)
+import           System.Exit
+import           System.FilePath.Posix       ((</>))
+import           System.IO
+import           System.Posix.Process        (executeFile)
 
 myModMask = mod4Mask
 myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
@@ -46,6 +47,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,	        xK_F3	), spawn "~/local/bin/ec")
     , ((modMask,	        xK_F4	), spawn "eclipse")
     , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")
+    , ((modMask .|. shiftMask,  xK_F12	), spawn "systemctl suspend")
     , ((modMask .|. shiftMask,  xK_c    ), kill)
     , ((modMask,                xK_space ), sendMessage NextLayout)
     , ((modMask,                xK_r     ), refresh)
@@ -62,9 +64,12 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,                xK_comma ), sendMessage (IncMasterN 1))
     , ((modMask,                xK_period), sendMessage (IncMasterN (-1)))
     , ((modMask,                xK_b     ), sendMessage ToggleStruts)
+    , ((modMask,                xK_F9    ), lowerVolume 4 >> return ())
+    , ((modMask,                xK_F10   ), raiseVolume 4 >> return ())
+    , ((modMask,                xK_F11   ), toggleMuteChannels ["Master", "Speaker+LO"] >> return ())
     , ((modMask .|. shiftMask,  xK_q     ), io exitSuccess)
     , ((modMask .|. shiftMask,  xK_r     ),
-          broadcastMessage ReleaseResources >> restart "xmonad" True)
+          broadcastMessage ReleaseResources >> spawn "cd ~/.xmonad/xmonad-env && ./build.sh && xmonad --restart")
     , ((modMask .|. controlMask, xK_k), screenWorkspace 1 >>= flip whenJust (windows . W.view))
     , ((modMask .|. controlMask, xK_j), screenWorkspace 0 >>= flip whenJust (windows . W.view))
     , ((modMask .|. shiftMask, xK_o), shiftNextScreen)
@@ -112,12 +117,11 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 genericLayout =	nameTail $ maximize $ smartBorders $
                 named "T" tiled
 	        ||| named "M" (tabbed shrinkText (theme smallClean))
-                ||| named "TH" tiled_horizontal
-	        ||| named "F" simplestFloat
+                ||| named "TH" tiledHorizontal
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled = Tall nmaster delta ratio
-     tiled_horizontal = Mirror tiled
+     tiledHorizontal = Mirror tiled
      -- The default number of windows in the master pane
      nmaster = 1
      -- Default proportion of screen occupied by master pane
@@ -125,9 +129,10 @@ genericLayout =	nameTail $ maximize $ smartBorders $
      -- Percent of screen to increment by when resizing panes
      delta   = 3/100
 
-myLayout = onWorkspace "1" (named "IM" $ combineTwoP
-                            (TwoPane 0.01 0.15) Grid Grid (Const False)) $
-           genericLayout
+-- myLayout = onWorkspace "1" (named "IM" $ combineTwoP
+--                             (TwoPane 0.01 0.15) Grid Grid (Const False)) $
+--            genericLayout
+myLayout = genericLayout
 
 myManageHook = composeAll
     [ className =? "gmrun" --> doFloat,
