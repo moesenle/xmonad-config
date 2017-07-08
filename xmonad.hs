@@ -67,7 +67,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
  
     , ((modMask,		xK_F1	), spawn "gmrun")
  
-    , ((modMask,	        xK_F2	), spawn "google-chrome")
+    , ((modMask,	        xK_F2	), spawn "firefox")
 
     , ((modMask,	        xK_F3	), spawn "~/local/bin/ec")
 
@@ -89,15 +89,12 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask,                xK_r     ), refresh)
  
     -- Move focus to the next window
-    , ((modMask,                xK_Tab   ), windows W.focusDown)
- 
-    -- Move focus to the next window
     , ((modMask,                xK_j     ), windows W.focusDown)
  
     -- Move focus to the previous window
     , ((modMask,                xK_k     ), windows W.focusUp  )
  
-    -- Move focus to the master window
+    -- Maximize focused window.
     , ((modMask,             xK_m     ), withFocused $ sendMessage . maximizeRestore )
  
     -- Swap the focused window and the master window
@@ -136,6 +133,10 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- Restart xmonad
     , ((modMask .|. shiftMask,  xK_r     ),
           broadcastMessage ReleaseResources >> restart "xmonad" True)
+
+    , ((modMask .|. controlMask, xK_k), screenWorkspace 1 >>= flip whenJust (windows . W.view))
+    , ((modMask .|. controlMask, xK_j), screenWorkspace 0 >>= flip whenJust (windows . W.view))
+
     ]
     ++
  
@@ -146,16 +147,16 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
  
     [((m .|. modMask, k), windows $ f i)
         | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
-        , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
+        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
     ++
  
     --
-    -- mod-{u,i}, Switch to {prev,next} workspace
-    -- mod-shift-{u,i}, Move client and shift to {prev,next} workspace
+    -- mod-{n,p}, Switch to {prev,next} workspace
+    -- mod-shift-{n,p}, Move client and shift to {prev,next} workspace
     -- Requires Xmonad.Actions.CycleWS
     --
-    [	((modMask		, xK_p	), prevWS)
-      ,	((modMask		, xK_n	), nextWS)
+    [	((modMask		, xK_p	), moveTo Prev HiddenWS)
+      ,	((modMask		, xK_n	), moveTo Next HiddenWS)
       ,	((modMask .|. shiftMask	, xK_p	), shiftToPrev >> prevWS)
     ,	((modMask .|. shiftMask	, xK_n	), shiftToNext >> nextWS)
     ]
@@ -229,7 +230,7 @@ startup = spawn "gnome-settings-daemon"
 
 main :: IO ()
 main = do
-  workspaceBarPipe <- spawnPipe "xmobar /home/moesenle/.xmonad/xmobarrc"
+  workspaceBarPipe <- spawnPipe "xmobar ~/.xmonad/xmobarrc"
                            
   --  conkyBarPipe <- spawnPipe myConkyBar
   xmonad $ ewmh $ withUrgencyHook NoUrgencyHook gnomeConfig {
