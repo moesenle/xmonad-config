@@ -57,83 +57,55 @@ myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
 --
 myNormalBorderColor  = "#000088"
 myFocusedBorderColor = "#00dddd"
- 
+
 ------------------------------------------------------------------------
 -- Key bindings
 --
 myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
- 
     [ ((modMask,                xK_Return), spawn $ XMonad.terminal conf)
- 
     , ((modMask,		xK_F1	), spawn "gmrun")
- 
     , ((modMask,	        xK_F2	), spawn "firefox")
-
     , ((modMask,	        xK_F3	), spawn "~/local/bin/ec")
-
     , ((modMask,	        xK_F4	), spawn "eclipse")
-      
     -- lock screen
-    , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")      
- 
+    , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")
     -- close focused window
     , ((modMask .|. shiftMask,  xK_c    ), kill)
- 
      -- Rotate through the available layout algorithms
     , ((modMask,                xK_space ), sendMessage NextLayout)
- 
-    --  Reset the layouts on the current workspace to default
-    -- , ((modMask .|. shiftMask,  xK_space ), setLayout $ XMonad.layoutHook conf)
- 
     -- Resize viewed windows to the correct size
     , ((modMask,                xK_r     ), refresh)
- 
     -- Move focus to the next window
     , ((modMask,                xK_j     ), windows W.focusDown)
- 
     -- Move focus to the previous window
     , ((modMask,                xK_k     ), windows W.focusUp  )
- 
     -- Maximize focused window.
     , ((modMask,             xK_m     ), withFocused $ sendMessage . maximizeRestore )
- 
     -- Swap the focused window and the master window
     , ((modMask .|. shiftMask,  xK_Return), windows W.swapMaster)
-
     -- Swap window
     , ((modMask,                     xK_o), sendMessage $ SwapWindow)
- 
     -- Swap the focused window with the next window
     , ((modMask .|. shiftMask,  xK_j     ), windows W.swapDown  )
- 
     -- Swap the focused window with the previous window
     , ((modMask .|. shiftMask,  xK_k     ), windows W.swapUp    )
- 
     -- Shrink the master area
     , ((modMask,                xK_h     ), sendMessage Shrink)
- 
     -- Expand the master area
     , ((modMask,                xK_l     ), sendMessage Expand)
- 
     -- Push window back into tiling
     , ((modMask,                xK_t     ), withFocused $ windows . W.sink)
- 
     -- Increment the number of windows in the master area
     , ((modMask,                xK_comma ), sendMessage (IncMasterN 1))
- 
     -- Deincrement the number of windows in the master area
     , ((modMask,                xK_period), sendMessage (IncMasterN (-1)))
- 
     -- toggle the status bar gap
     , ((modMask,                xK_b     ), sendMessage ToggleStruts)
- 
     -- Quit xmonad (Default)
     , ((modMask .|. shiftMask,  xK_q     ), io (exitWith ExitSuccess))
- 
     -- Restart xmonad
     , ((modMask .|. shiftMask,  xK_r     ),
           broadcastMessage ReleaseResources >> restart "xmonad" True)
-
     , ((modMask .|. controlMask, xK_k), screenWorkspace 1 >>= flip whenJust (windows . W.view))
     , ((modMask .|. controlMask, xK_j), screenWorkspace 0 >>= flip whenJust (windows . W.view))
     , ((modMask .|. shiftMask, xK_o), shiftNextScreen)
@@ -145,7 +117,6 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- mod-[1..6], Switch to workspace N
     -- mod-shift-[1..6], Move client to workspace N
     --
- 
     [((m .|. modMask, k), windows $ f i)
         | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
@@ -166,16 +137,12 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- Mouse bindings: default actions bound to mouse events
 --
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
- 
     -- mod-button1, Set the window to floating mode and move by dragging
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
- 
     -- mod-button2, Raise the window to the top of the stack
     , ((modMask, button2), (\w -> focus w >> windows W.swapMaster))
- 
     -- mod-button3, Set the window to floating mode and resize by dragging
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
- 
     -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
  
@@ -187,17 +154,13 @@ genericLayout =	nameTail $ maximize $ smartBorders $
                 named "T" tiled 
 	        ||| named "M" (tabbed shrinkText (theme smallClean))
 	        ||| named "F" simplestFloat
-                
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
- 
      -- The default number of windows in the master pane
      nmaster = 1
- 
      -- Default proportion of screen occupied by master pane
      ratio   = 1/2
- 
      -- Percent of screen to increment by when resizing panes
      delta   = 3/100
  
@@ -215,7 +178,6 @@ myManageHook = composeAll
       appName =? "xfce4-notifyd" --> doIgnore
     ]
  
- 
 myLogHook :: Handle -> X ()
 myLogHook h =
   dynamicLogWithPP $ xmobarPP
@@ -227,7 +189,10 @@ myLogHook h =
 ------------------------------------------------------------------------
  
 startup :: X ()
-startup = spawn "gnome-settings-daemon"
+startup = do
+  spawn "unity-settings-daemon"
+  spawn "trayer --edge top --align right --SetDockType true --SetPartialStrut true \
+         \--expand true --width 6 --transparent true --tint 0x191970 --height 14"
 
 main :: IO ()
 main = do
