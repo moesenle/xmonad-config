@@ -139,9 +139,6 @@ myLayout = genericLayout
 myManageHook = composeAll [ className =? "gmrun" --> doFloat
                           , appName =? "desktop_window" --> doIgnore
                           , className =? "gimp" --> doFloat
-                          , className =? "Unity-2d-panel" --> doIgnore
-                          , className =? "Unity-2d-launcher" --> doIgnore
-                          , appName =? "xfce4-notifyd" --> doIgnore
                           ]
 
 myLogHook :: Handle -> X ()
