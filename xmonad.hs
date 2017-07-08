@@ -151,12 +151,14 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- 
  
 genericLayout =	nameTail $ maximize $ smartBorders $
-                named "T" tiled 
+                named "T" tiled
+                ||| named "TH" tiled_horizontal
 	        ||| named "M" (tabbed shrinkText (theme smallClean))
 	        ||| named "F" simplestFloat
   where
      -- default tiling algorithm partitions the screen into two panes
-     tiled   = Tall nmaster delta ratio
+     tiled = Tall nmaster delta ratio
+     tiled_horizontal = Mirror tiled
      -- The default number of windows in the master pane
      nmaster = 1
      -- Default proportion of screen occupied by master pane
