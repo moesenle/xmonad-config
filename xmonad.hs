@@ -1,7 +1,12 @@
 
+import           Control.Monad               (void, when)
+import           System.Directory            (doesFileExist, getHomeDirectory)
+import           System.Exit
+import           System.FilePath.Posix       ((</>))
+import           System.IO
+import           System.Posix.Process        (executeFile)
 import           XMonad
 import           XMonad.Actions.CycleWS
-import           XMonad.Actions.Volume
 import           XMonad.Config.Gnome
 import           XMonad.Hooks.DynamicLog
 import           XMonad.Hooks.EwmhDesktops
@@ -17,17 +22,11 @@ import           XMonad.Layout.PerWorkspace
 import           XMonad.Layout.SimplestFloat
 import           XMonad.Layout.Tabbed
 import           XMonad.Layout.TwoPane
-import qualified XMonad.StackSet             as W
 import           XMonad.Util.Run
 import           XMonad.Util.Themes
 
-import           Control.Monad               (void, when)
 import qualified Data.Map                    as M
-import           System.Directory            (doesFileExist, getHomeDirectory)
-import           System.Exit
-import           System.FilePath.Posix       ((</>))
-import           System.IO
-import           System.Posix.Process        (executeFile)
+import qualified XMonad.StackSet             as W
 
 myModMask = mod4Mask
 myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
@@ -40,36 +39,35 @@ myFocusedBorderColor = "#00dddd"
 ------------------------------------------------------------------------
 -- Key bindings
 --
-myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
-    [ ((modMask,                xK_Return), spawn $ XMonad.terminal conf)
-    , ((modMask,		xK_F1	), spawn "gmrun")
-    , ((modMask,	        xK_F2	), spawn "chromium-browser")
-    , ((modMask,	        xK_F3	), spawn "~/local/bin/ec")
-    , ((modMask,	        xK_F4	), spawn "eclipse")
-    , ((modMask,	        xK_F12	), spawn "gnome-screensaver-command --lock")
-    , ((modMask .|. shiftMask,  xK_F12	), spawn "systemctl suspend")
-    , ((modMask .|. shiftMask,  xK_c    ), kill)
-    , ((modMask,                xK_space ), sendMessage NextLayout)
-    , ((modMask,                xK_r     ), refresh)
-    , ((modMask,                xK_j     ), windows W.focusDown)
-    , ((modMask,                xK_k     ), windows W.focusUp  )
-    , ((modMask,             xK_m     ), withFocused $ sendMessage . maximizeRestore )
-    , ((modMask .|. shiftMask,  xK_Return), windows W.swapMaster)
-    , ((modMask,                     xK_o), sendMessage SwapWindow)
-    , ((modMask .|. shiftMask,  xK_j     ), windows W.swapDown  )
-    , ((modMask .|. shiftMask,  xK_k     ), windows W.swapUp    )
-    , ((modMask,                xK_h     ), sendMessage Shrink)
-    , ((modMask,                xK_l     ), sendMessage Expand)
-    , ((modMask,                xK_t     ), withFocused $ windows . W.sink)
-    , ((modMask,                xK_comma ), sendMessage (IncMasterN 1))
-    , ((modMask,                xK_period), sendMessage (IncMasterN (-1)))
-    , ((modMask,                xK_b     ), sendMessage ToggleStruts)
-    , ((modMask,                xK_F9    ), lowerVolume 4 >> return ())
-    , ((modMask,                xK_F10   ), raiseVolume 4 >> return ())
-    , ((modMask,                xK_F11   ), toggleMuteChannels ["Master", "Speaker+LO"] >> return ())
-    , ((modMask .|. shiftMask,  xK_q     ), io exitSuccess)
-    , ((modMask .|. shiftMask,  xK_r     ),
-          broadcastMessage ReleaseResources >> spawn "cd ~/.xmonad/xmonad-env && ./build.sh && xmonad --restart")
+myKeys conf @ XConfig {XMonad.modMask = modMask} = M.fromList $
+    [ ((modMask, xK_Return), spawn $ XMonad.terminal conf)
+    , ((modMask, xK_F1), spawn "gmrun")
+    , ((modMask, xK_F2), spawn "chromium-browser")
+    , ((modMask, xK_F3), spawn "~/local/bin/ec")
+    , ((modMask, xK_F4), spawn "eclipse")
+    , ((modMask, xK_F12), spawn "gnome-screensaver-command --lock")
+    , ((modMask .|. shiftMask, xK_F12), spawn "systemctl suspend")
+    , ((modMask .|. shiftMask, xK_c), kill)
+    , ((modMask, xK_space), sendMessage NextLayout)
+    , ((modMask, xK_r), refresh)
+    , ((modMask, xK_j), windows W.focusDown)
+    , ((modMask, xK_k), windows W.focusUp)
+    , ((modMask, xK_m), withFocused $ sendMessage . maximizeRestore )
+    , ((modMask .|. shiftMask, xK_Return), windows W.swapMaster)
+    , ((modMask, xK_o), sendMessage SwapWindow)
+    , ((modMask .|. shiftMask, xK_j), windows W.swapDown)
+    , ((modMask .|. shiftMask,  xK_k), windows W.swapUp)
+    , ((modMask, xK_h), sendMessage Shrink)
+    , ((modMask, xK_l), sendMessage Expand)
+    , ((modMask, xK_t), withFocused $ windows . W.sink)
+    , ((modMask, xK_comma ), sendMessage (IncMasterN 1))
+    , ((modMask, xK_period), sendMessage (IncMasterN (-1)))
+    , ((modMask, xK_b), sendMessage ToggleStruts)
+    , ((0, 0x1008FF11), spawn "amixer set Master 2-")
+    , ((0, 0x1008FF13), spawn "amixer set Master 2+")
+    , ((0, 0x1008FF12), spawn "amixer set Master toggle")
+    , ((modMask .|. shiftMask,  xK_q), io exitSuccess)
+    , ((modMask .|. shiftMask,  xK_r), broadcastMessage ReleaseResources >> restart "xmonad" True)
     , ((modMask .|. controlMask, xK_k), screenWorkspace 1 >>= flip whenJust (windows . W.view))
     , ((modMask .|. controlMask, xK_j), screenWorkspace 0 >>= flip whenJust (windows . W.view))
     , ((modMask .|. shiftMask, xK_o), shiftNextScreen)
@@ -91,22 +89,22 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- mod-shift-{n,p}, Move client and shift to {prev,next} workspace
     -- Requires Xmonad.Actions.CycleWS
     --
-    [	((modMask		, xK_p	), moveTo Prev HiddenWS)
-      ,	((modMask		, xK_n	), moveTo Next HiddenWS)
-      ,	((modMask .|. shiftMask	, xK_p	), shiftToPrev >> prevWS)
-    ,	((modMask .|. shiftMask	, xK_n	), shiftToNext >> nextWS)
+    [ ((modMask, xK_p), moveTo Prev HiddenWS)
+    , ((modMask, xK_n), moveTo Next HiddenWS)
+    , ((modMask .|. shiftMask, xK_p), shiftToPrev >> prevWS)
+    , ((modMask .|. shiftMask, xK_n), shiftToNext >> nextWS)
     ]
 
 ------------------------------------------------------------------------
 -- Mouse bindings: default actions bound to mouse events
 --
-myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
+myMouseBindings XConfig {XMonad.modMask = modMask} = M.fromList
     -- mod-button1, Set the window to floating mode and move by dragging
-    [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
+    [ ((modMask, button1), \w -> focus w >> mouseMoveWindow w)
     -- mod-button2, Raise the window to the top of the stack
-    , ((modMask, button2), (\w -> focus w >> windows W.swapMaster))
+    , ((modMask, button2), \w -> focus w >> windows W.swapMaster)
     -- mod-button3, Set the window to floating mode and resize by dragging
-    , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
+    , ((modMask, button3), \w -> focus w >> mouseResizeWindow w)
     -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
@@ -114,9 +112,9 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- Layouts:
 --
 
-genericLayout =	nameTail $ maximize $ smartBorders $
+genericLayout = nameTail $ maximize $ smartBorders $
                 named "T" tiled
-	        ||| named "M" (tabbed shrinkText (theme smallClean))
+                ||| named "M" (tabbed shrinkText (theme smallClean))
                 ||| named "TH" tiledHorizontal
   where
      -- default tiling algorithm partitions the screen into two panes
@@ -155,8 +153,7 @@ myLogHook h =
 ------------------------------------------------------------------------
 
 startup :: X ()
-startup = do
-  spawn "unity-settings-daemon"
+startup = spawn "unity-settings-daemon"
 
 main :: IO ()
 main = do
@@ -176,7 +173,7 @@ main = do
                            , manageHook = manageHook gnomeConfig <+> myManageHook <+> manageDocks
                            , logHook = logHook gnomeConfig <+> myLogHook wp
                            , handleEventHook = fullscreenEventHook <+> ewmhDesktopsEventHook <+> handleEventHook gnomeConfig
-                           , layoutHook = avoidStruts $ myLayout
+                           , layoutHook = avoidStruts myLayout
                            , startupHook = startup <+> ewmhDesktopsStartup
                            , clickJustFocuses = False
                            }
