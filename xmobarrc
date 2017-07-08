@@ -6,8 +6,9 @@ Config { font = "-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*"
        , commands = [ Run Date "%a %b %_d %H:%M:%S" "date" 10
                     , Run StdinReader
                     , Run Com "xmobar-notmuch-mail-handler.sh" [] "mails" 10
+                    , Run BatteryP ["BAT0"] ["-t", "[<left>% <acstatus>]", "--", "-O", "*", "-i", "*", "-o", ""] 10
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = "%StdinReader% }{%mails% <fc=#ee9a00>%date%</fc>"
+       , template = "%StdinReader% }{%mails% %battery% <fc=#ee9a00>%date%</fc>"
        }
