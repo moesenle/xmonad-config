@@ -1,5 +1,6 @@
 
 import Control.Monad               (void, when)
+import Data.Default                (def)
 import System.Directory            (doesFileExist, getHomeDirectory)
 import System.Exit                 (exitSuccess)
 import System.FilePath.Posix       ((</>))
@@ -8,6 +9,7 @@ import System.Posix.Process        (executeFile)
 import XMonad
 import XMonad.Actions.CycleWS      (Direction1D (..), WSType (..), moveTo, nextWS, prevWS,
                                     shiftNextScreen, shiftToNext, shiftToPrev, swapNextScreen)
+import XMonad.Actions.Navigation2D (Direction2D (..), screenGo, withNavigation2DConfig)
 import XMonad.Config.Gnome         (gnomeConfig)
 import XMonad.Hooks.DynamicLog     (PP (..), dynamicLogWithPP, shorten, xmobarColor, xmobarPP)
 import XMonad.Hooks.EwmhDesktops   (ewmh, ewmhDesktopsEventHook, ewmhDesktopsStartup,
@@ -71,8 +73,8 @@ myKeys conf @ XConfig {XMonad.modMask = modMask} =
                , ((0, 0x1008FF12), spawn "amixer set Master toggle")
                , ((modMask .|. shiftMask,  xK_q), io exitSuccess)
                , ((modMask .|. shiftMask,  xK_r), broadcastMessage ReleaseResources >> restart "xmonad" True)
-               , ((modMask .|. controlMask, xK_k), screenWorkspace 1 >>= flip whenJust (windows . W.view))
-               , ((modMask .|. controlMask, xK_j), screenWorkspace 0 >>= flip whenJust (windows . W.view))
+               , ((modMask .|. controlMask, xK_k), screenGo R False)
+               , ((modMask .|. controlMask, xK_j), screenGo L False)
                , ((modMask .|. shiftMask, xK_o), shiftNextScreen)
                , ((modMask .|. shiftMask, xK_s), swapNextScreen)
                ]
@@ -156,7 +158,7 @@ main :: IO ()
 main = do
   executeInHome ".xmonad/start.sh"
   workspaceBarPipe <- spawnPipe "xmobar ~/.xmonad/xmobarrc"
-  xmonad $ ewmh $ withUrgencyHook NoUrgencyHook (config workspaceBarPipe)
+  xmonad . ewmh . withNavigation2DConfig def $ withUrgencyHook NoUrgencyHook (config workspaceBarPipe)
  where
   config wp = gnomeConfig { terminal = "urxvt-wrapper"
                           , focusFollowsMouse = False
