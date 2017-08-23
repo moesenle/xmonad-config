@@ -1,13 +1,14 @@
 Config { font = "-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*"
        , bgColor = "black"
        , fgColor = "grey"
-       , position = TopW L 94
+       , position = TopW L 90
        , lowerOnStart = True
        , commands = [ Run Date "%a %b %_d %H:%M:%S" "date" 10
                     , Run StdinReader
-                    , Run Com "cat" ["~/.xmonad/imapwatcher-pipe"] "imapwatcher" 10
+                    , Run Com "cat" ["/home/moesenle/.xmonad/imapwatcher-pipe"] "imapwatcher" 10
+                    , Run Com "battery-status.sh" [] "battery" 10
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = "%StdinReader% }{%imapwatcher% <fc=#ee9a00>%date%</fc>"
+       , template = "%StdinReader% }{%imapwatcher% %battery% <fc=#ee9a00>%date%</fc>"
        }
