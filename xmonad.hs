@@ -1,121 +1,109 @@
---
--- xmonad config file.
---
- 
--- XMonad Core
+
+import Control.Monad               (void, when)
+import Data.Default                (def)
+import System.Directory            (doesFileExist, getHomeDirectory)
+import System.Exit                 (exitSuccess)
+import System.FilePath.Posix       ((</>))
+import System.IO                   (Handle, hPutStrLn)
+import System.Posix.Process        (executeFile)
 import XMonad
-import System.Exit
- 
-import qualified XMonad.StackSet as W
+import XMonad.Actions.CycleWS      (Direction1D (..), WSType (..), moveTo, nextWS, prevWS,
+                                    shiftNextScreen, shiftToNext, shiftToPrev, swapNextScreen)
+import XMonad.Actions.Navigation2D (Direction2D (..), screenGo, withNavigation2DConfig)
+import XMonad.Config.Gnome         (gnomeConfig)
+import XMonad.Hooks.DynamicLog     (PP (..), dynamicLogWithPP, shorten, xmobarColor, xmobarPP)
+import XMonad.Hooks.EwmhDesktops   (ewmh, ewmhDesktopsEventHook, ewmhDesktopsStartup,
+                                    fullscreenEventHook)
+import XMonad.Hooks.ManageDocks    (ToggleStruts (..), avoidStruts, manageDocks)
+import XMonad.Hooks.ManageHelpers  ()
+import XMonad.Hooks.UrgencyHook    (NoUrgencyHook (..), withUrgencyHook)
+import XMonad.Layout.ComboP        (SwapWindow (..))
+import XMonad.Layout.Decoration    (shrinkText)
+import XMonad.Layout.Grid          ()
+import XMonad.Layout.Maximize      (maximize, maximizeRestore)
+import XMonad.Layout.Named         (nameTail, named)
+import XMonad.Layout.NoBorders     (smartBorders)
+import XMonad.Layout.PerWorkspace  ()
+import XMonad.Layout.SimplestFloat ()
+import XMonad.Layout.Tabbed        (tabbed)
+import XMonad.Layout.TwoPane       ()
+import XMonad.Util.Run             (spawnPipe)
+import XMonad.Util.Themes          (smallClean, theme)
+
 import qualified Data.Map        as M
- 
--- GHC hierarchical libraries
-import XMonad.Config.Gnome
-import XMonad.Util.Run
-import System.IO
- 
---Contribs
-import XMonad.Actions.CycleWS
- 
-import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.ManageHelpers
-import XMonad.Hooks.UrgencyHook
- 
-import XMonad.Layout.Maximize
-import XMonad.Layout.NoBorders
-import XMonad.Layout.PerWorkspace
-import XMonad.Layout.SimplestFloat
-import XMonad.Layout.Tabbed
-import XMonad.Layout.ComboP
-import XMonad.Layout.TwoPane
-import XMonad.Layout.Grid
-import XMonad.Layout.Named
-    
-import XMonad.Util.Themes
- 
-myModMask	= mod4Mask
+import qualified XMonad.StackSet as W
+
+myModMask = mod4Mask
 myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
-myNormalBorderColor  = "#000088"
+
+-- Border colors for unfocused and focused windows, respectively.
+--
+myNormalBorderColor = "#000088"
 myFocusedBorderColor = "#00dddd"
- 
+
 ------------------------------------------------------------------------
 -- Key bindings
 --
-myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
-    [ ((modMask, xK_Return), spawn $ XMonad.terminal conf)
-    , ((modMask, xK_F1), spawn "gmrun")
-    , ((modMask, xK_F2), spawn "google-chrome")
-    , ((modMask, xK_F3), spawn "~/local/bin/ec")
-    , ((modMask, xK_F4), spawn "eclipse")
-    , ((modMask, xK_F12), spawn "gnome-screensaver-command --lock")      
-    -- close focused window
-    , ((modMask .|. shiftMask, xK_c), kill)
-     -- Rotate through the available layout algorithms
-    , ((modMask, xK_space), sendMessage NextLayout)
-    -- Resize viewed windows to the correct size
-    , ((modMask, xK_r), refresh)
-    -- Move focus to the next window
-    , ((modMask, xK_Tab), windows W.focusDown)
-    -- Move focus to the next window
-    , ((modMask, xK_j), windows W.focusDown)
-    -- Move focus to the previous window
-    , ((modMask, xK_k), windows W.focusUp)
-    -- Move focus to the master window
-    , ((modMask, xK_m), withFocused $ sendMessage . maximizeRestore)
-    -- Swap the focused window and the master window
-    , ((modMask .|. shiftMask,  xK_Return), windows W.swapMaster)
-    -- Swap window
-    , ((modMask, xK_o), sendMessage SwapWindow)
-    -- Swap the focused window with the next window
-    , ((modMask .|. shiftMask,  xK_j), windows W.swapDown)
-    -- Swap the focused window with the previous window
-    , ((modMask .|. shiftMask,  xK_k), windows W.swapUp)
-    -- Shrink the master area
-    , ((modMask, xK_h), sendMessage Shrink)
-    -- Expand the master area
-    , ((modMask, xK_l), sendMessage Expand)
-    -- Push window back into tiling
-    , ((modMask, xK_t), withFocused $ windows . W.sink)
-    -- Increment the number of windows in the master area
-    , ((modMask, xK_comma), sendMessage (IncMasterN 1))
-    -- Deincrement the number of windows in the master area
-    , ((modMask, xK_period), sendMessage (IncMasterN (-1)))
-    -- toggle the status bar gap
-    , ((modMask, xK_b), sendMessage ToggleStruts)
-    -- Quit xmonad (Default)
-    , ((modMask .|. shiftMask, xK_q), io exitSuccess)
-    -- Restart xmonad
-    , ((modMask .|. shiftMask, xK_r),
-          broadcastMessage ReleaseResources >> restart "xmonad" True)
-    ]
-    ++
- 
-    --
-    -- mod-[1..6], Switch to workspace N
-    -- mod-shift-[1..6], Move client to workspace N
-    --
-    [((m .|. modMask, k), windows $ f i)
-        | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
-        , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
-    ++
- 
-    --
-    -- mod-{u,i}, Switch to {prev,next} workspace
-    -- mod-shift-{u,i}, Move client and shift to {prev,next} workspace
-    -- Requires Xmonad.Actions.CycleWS
-    --
-    [	((modMask		, xK_p	), prevWS)
-      ,	((modMask		, xK_n	), nextWS)
-      ,	((modMask .|. shiftMask	, xK_p	), shiftToPrev >> prevWS)
-    ,	((modMask .|. shiftMask	, xK_n	), shiftToNext >> nextWS)
-    ]
- 
+myKeys conf @ XConfig {XMonad.modMask = modMask} =
+  M.fromList $ [ ((modMask, xK_Return), spawn $ XMonad.terminal conf)
+               , ((modMask, xK_F1), spawn "gmrun")
+               , ((modMask, xK_F2), spawn "google-chrome")
+               , ((modMask, xK_F3), spawn "~/local/bin/ec")
+               , ((modMask, xK_F12), spawn "gnome-screensaver-command --lock")
+               , ((modMask .|. shiftMask, xK_F12), spawn "systemctl suspend")
+               , ((modMask .|. shiftMask, xK_c), kill)
+               , ((modMask, xK_space), sendMessage NextLayout)
+               , ((modMask, xK_r), refresh)
+               , ((modMask, xK_j), windows W.focusDown)
+               , ((modMask, xK_k), windows W.focusUp)
+               , ((modMask, xK_m), withFocused $ sendMessage . maximizeRestore)
+               , ((modMask .|. shiftMask, xK_Return), windows W.swapMaster)
+               , ((modMask, xK_o), sendMessage SwapWindow)
+               , ((modMask .|. shiftMask, xK_j), windows W.swapDown)
+               , ((modMask .|. shiftMask,  xK_k), windows W.swapUp)
+               , ((modMask, xK_h), sendMessage Shrink)
+               , ((modMask, xK_l), sendMessage Expand)
+               , ((modMask, xK_t), withFocused $ windows . W.sink)
+               , ((modMask, xK_comma ), sendMessage (IncMasterN 1))
+               , ((modMask, xK_period), sendMessage (IncMasterN (-1)))
+               , ((modMask, xK_b), sendMessage ToggleStruts)
+               , ((0, 0x1008FF11), spawn "amixer set Master 2-")
+               , ((0, 0x1008FF13), spawn "amixer set Master 2+")
+               , ((0, 0x1008FF12), spawn "amixer set Master toggle")
+               , ((modMask .|. shiftMask,  xK_q), io exitSuccess)
+               , ((modMask .|. shiftMask,  xK_r), broadcastMessage ReleaseResources >> restart "xmonad" True)
+               , ((modMask .|. controlMask, xK_k), screenGo R False)
+               , ((modMask .|. controlMask, xK_j), screenGo L False)
+               , ((modMask .|. shiftMask, xK_o), shiftNextScreen)
+               , ((modMask .|. shiftMask, xK_s), swapNextScreen)
+               ]
+               ++
+
+               --
+               -- mod-[1..6], Switch to workspace N
+               -- mod-shift-[1..6], Move client to workspace N
+               --
+               [((m .|. modMask, k), windows $ f i)
+                   | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
+                   , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
+               ++
+
+               --
+               -- mod-{n,p}, Switch to {prev,next} workspace
+               -- mod-shift-{n,p}, Move client and shift to {prev,next} workspace
+               -- Requires Xmonad.Actions.CycleWS
+               --
+               [ ((modMask, xK_p), moveTo Prev HiddenWS)
+               , ((modMask, xK_n), moveTo Next HiddenWS)
+               , ((modMask .|. shiftMask, xK_p), shiftToPrev >> prevWS)
+               , ((modMask .|. shiftMask, xK_n), shiftToNext >> nextWS)
+               ]
+
 ------------------------------------------------------------------------
 -- Mouse bindings: default actions bound to mouse events
 --
-myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList
+myMouseBindings XConfig {XMonad.modMask = modMask} =
+  M.fromList
     -- mod-button1, Set the window to floating mode and move by dragging
     [ ((modMask, button1), \w -> focus w >> mouseMoveWindow w)
     -- mod-button2, Raise the window to the top of the stack
@@ -124,7 +112,7 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList
     , ((modMask, button3), \w -> focus w >> mouseResizeWindow w)
     -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
- 
+
 ------------------------------------------------------------------------
 -- Layouts:
 -- 
@@ -146,12 +134,10 @@ myLayout = onWorkspace "1" (named "IM" $ combineTwoP
                             (TwoPane 0.01 0.15) Grid Grid (Const False)) $
            genericLayout
   
-myManageHook = composeAll
-    [ className =? "gmrun" --> doFloat,
-      appName =? "desktop_window" --> doIgnore,
-      (role =? "gimp-toolbox" <||> role =? "gimp-image-window") --> (ask >>= doF . W.sink)
-    ]
-  where role = stringProperty "WM_WINDOW_ROLE"
+myManageHook = composeAll [ className =? "gmrun" --> doFloat
+                          , appName =? "desktop_window" --> doIgnore
+                          , className =? "gimp" --> doFloat
+                          ]
 
 myLogHook :: Handle -> X ()
 myLogHook h =
@@ -160,34 +146,33 @@ myLogHook h =
                               }
 
 ------------------------------------------------------------------------
- 
+
 startup :: X ()
-startup = spawn "gnome-settings-daemon"
+startup = spawn "unity-settings-daemon"
 
 main :: IO ()
 main = do
-  workspaceBarPipe <- spawnPipe "xmobar /home/moesenle/.xmonad/xmobarrc"
-                           
-  --  conkyBarPipe <- spawnPipe myConkyBar
-  xmonad $ ewmh $ withUrgencyHook NoUrgencyHook gnomeConfig {
-    -- simple stuff
-    terminal = "urxvt",
-    focusFollowsMouse = False,
-    borderWidth = 2,
-    modMask = myModMask,
-    workspaces = myWorkspaces,
-    normalBorderColor = myNormalBorderColor,
-    focusedBorderColor = myFocusedBorderColor,
- 
-    -- key bindings
-    keys = myKeys,
-    mouseBindings = myMouseBindings,
- 
-    -- hooks, layouts
-    manageHook = manageHook gnomeConfig <+> myManageHook <+> manageDocks,
-    logHook = logHook gnomeConfig <+> myLogHook workspaceBarPipe,
-    handleEventHook = fullscreenEventHook <+> ewmhDesktopsEventHook <+> handleEventHook gnomeConfig,
-    layoutHook = avoidStruts myLayout,
-    startupHook = startup <+> ewmhDesktopsStartup,
-    clickJustFocuses = False         
-    }
+  executeInHome ".xmonad/start.sh"
+  workspaceBarPipe <- spawnPipe "xmobar ~/.xmonad/xmobarrc"
+  xmonad . ewmh . withNavigation2DConfig def $ withUrgencyHook NoUrgencyHook (config workspaceBarPipe)
+ where
+  config wp = gnomeConfig { terminal = "urxvt-wrapper"
+                          , focusFollowsMouse = False
+                          , borderWidth = 2
+                          , modMask = myModMask
+                          , workspaces = myWorkspaces
+                          , normalBorderColor = myNormalBorderColor
+                          , focusedBorderColor = myFocusedBorderColor
+                          , keys = myKeys
+                          , mouseBindings = myMouseBindings
+                          , manageHook = manageHook gnomeConfig <+> myManageHook <+> manageDocks
+                          , logHook = logHook gnomeConfig <+> myLogHook wp
+                          , handleEventHook = fullscreenEventHook <+> ewmhDesktopsEventHook <+> handleEventHook gnomeConfig
+                          , layoutHook = avoidStruts myLayout
+                          , startupHook = startup <+> ewmhDesktopsStartup
+                          , clickJustFocuses = False
+                          }
+
+  executeInHome file = do
+    home <- getHomeDirectory
+    doesFileExist (home </> file) >>= \e -> when e . void $ spawn (home </> file)

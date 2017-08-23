@@ -1,14 +1,16 @@
 Config { font = "-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*"
        , bgColor = "black"
        , fgColor = "grey"
-       , position = TopW L 90
+       , position = TopW L 100
        , lowerOnStart = True
        , commands = [ Run Date "%a %b %_d %H:%M:%S" "date" 10
                     , Run StdinReader
+                    , Run Volume "default" "Master" [] 2
                     , Run Com "cat" ["/home/moesenle/.xmonad/imapwatcher-pipe"] "imapwatcher" 10
-                    , Run Com "battery-status.sh" [] "battery" 10
+                    , Run Wireless "wlp1s0" ["-t", "Wifi: <essid> (<quality>%)"] 10
+                    , Run BatteryP ["BAT0"] ["-t", "[<left>% <acstatus> / <timeleft>]", "--", "-O", "*", "-i", "*", "-o", ""] 10
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = "%StdinReader% }{%imapwatcher% %battery% <fc=#ee9a00>%date%</fc>"
+       , template = "%StdinReader% }{%default:Master% %wlp1s0wi% %mails% %battery% <fc=#ee9a00>%date%</fc>"
        }

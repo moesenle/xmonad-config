@@ -4,3 +4,4 @@ xmonad.errors
 xmonad.hi
 xmonad.hs.orig
 xmonad.o
+*.pid
