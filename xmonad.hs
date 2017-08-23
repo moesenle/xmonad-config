@@ -7,26 +7,20 @@ import System.FilePath.Posix       ((</>))
 import System.IO                   (Handle, hPutStrLn)
 import System.Posix.Process        (executeFile)
 import XMonad
-import XMonad.Actions.CycleWS      (Direction1D (..), WSType (..), moveTo, nextWS, prevWS,
-                                    shiftNextScreen, shiftToNext, shiftToPrev, swapNextScreen)
+import XMonad.Actions.CycleWS      (Direction1D (..), WSType (..), moveTo, nextWS, prevWS, shiftNextScreen, shiftToNext,
+                                    shiftToPrev, swapNextScreen)
 import XMonad.Actions.Navigation2D (Direction2D (..), screenGo, withNavigation2DConfig)
 import XMonad.Config.Gnome         (gnomeConfig)
 import XMonad.Hooks.DynamicLog     (PP (..), dynamicLogWithPP, shorten, xmobarColor, xmobarPP)
-import XMonad.Hooks.EwmhDesktops   (ewmh, ewmhDesktopsEventHook, ewmhDesktopsStartup,
-                                    fullscreenEventHook)
+import XMonad.Hooks.EwmhDesktops   (ewmh, ewmhDesktopsEventHook, ewmhDesktopsStartup, fullscreenEventHook)
 import XMonad.Hooks.ManageDocks    (ToggleStruts (..), avoidStruts, manageDocks)
-import XMonad.Hooks.ManageHelpers  ()
 import XMonad.Hooks.UrgencyHook    (NoUrgencyHook (..), withUrgencyHook)
 import XMonad.Layout.ComboP        (SwapWindow (..))
 import XMonad.Layout.Decoration    (shrinkText)
-import XMonad.Layout.Grid          ()
 import XMonad.Layout.Maximize      (maximize, maximizeRestore)
 import XMonad.Layout.Named         (nameTail, named)
 import XMonad.Layout.NoBorders     (smartBorders)
-import XMonad.Layout.PerWorkspace  ()
-import XMonad.Layout.SimplestFloat ()
 import XMonad.Layout.Tabbed        (tabbed)
-import XMonad.Layout.TwoPane       ()
 import XMonad.Util.Run             (spawnPipe)
 import XMonad.Util.Themes          (smallClean, theme)
 
@@ -115,25 +109,23 @@ myMouseBindings XConfig {XMonad.modMask = modMask} =
 
 ------------------------------------------------------------------------
 -- Layouts:
--- 
- 
-genericLayout =	nameTail . maximize . smartBorders $ named "T" tiled 
-	        ||| named "M" (tabbed shrinkText (theme smallClean))
-	        ||| named "F" simplestFloat
-  where
-     -- default tiling algorithm partitions the screen into two panes
-     tiled   = Tall nmaster delta ratio
-     -- The default number of windows in the master pane
-     nmaster = 1
-     -- Default proportion of screen occupied by master pane
-     ratio   = 1/2
-     -- Percent of screen to increment by when resizing panes
-     delta   = 3/100
+--
 
-myLayout = onWorkspace "1" (named "IM" $ combineTwoP
-                            (TwoPane 0.01 0.15) Grid Grid (Const False)) $
-           genericLayout
-  
+myLayout = nameTail $ maximize $ smartBorders $
+                named "T" tiled
+                ||| named "M" (tabbed shrinkText (theme smallClean))
+                ||| named "TH" tiledHorizontal
+ where
+  -- default tiling algorithm partitions the screen into two panes
+  tiled = Tall nmaster delta ratio
+  tiledHorizontal = Mirror tiled
+  -- The default number of windows in the master pane
+  nmaster = 1
+  -- Default proportion of screen occupied by master pane
+  ratio   = 1/2
+  -- Percent of screen to increment by when resizing panes
+  delta   = 3/100
+
 myManageHook = composeAll [ className =? "gmrun" --> doFloat
                           , appName =? "desktop_window" --> doIgnore
                           , className =? "gimp" --> doFloat
@@ -156,7 +148,7 @@ main = do
   workspaceBarPipe <- spawnPipe "xmobar ~/.xmonad/xmobarrc"
   xmonad . ewmh . withNavigation2DConfig def $ withUrgencyHook NoUrgencyHook (config workspaceBarPipe)
  where
-  config wp = gnomeConfig { terminal = "urxvt-wrapper"
+  config wp = gnomeConfig { terminal = "urxvt"
                           , focusFollowsMouse = False
                           , borderWidth = 2
                           , modMask = myModMask
